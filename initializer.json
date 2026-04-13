@@ -1,5 +1,5 @@
 {
-  "__PROJECT_NAME__": "android-app-demo",
-  "__APP_NAME__": "Android App Demo",
-  "__PACKAGE_NAME__": "com.highcapable.androidappdemo"
+  "__PROJECT_NAME__": "hello-android",
+  "__APP_NAME__": "Hi",
+  "__PACKAGE_NAME__": "com.cotlin.helloandroid"
 }
