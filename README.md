@@ -1,7 +1,7 @@
 
 # Hello Android - 你好安卓
 
-[![Build APK](https://github.com/realmg51-cpu/HelloWorld-Android/actions/workflows/build.yml/badge.svg)](https://github.com/realmg51-cpu/HelloWorld-Android/actions/workflows/release.yml)
+[![Build APK](https://github.com/realmg51-cpu/HelloWorld-Android/actions/workflows/release.yml/badge.svg)](https://github.com/realmg51-cpu/HelloWorld-Android/actions/workflows/release.yml)
 
 一个简单的 Android 应用示例，使用 Kotlin 编写，展示 "Hi" 消息。  
 A simple Android app written in Kotlin that displays a "Hi" message.
