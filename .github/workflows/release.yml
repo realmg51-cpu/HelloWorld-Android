@@ -16,14 +16,13 @@ jobs:
         java-version: 17
         distribution: 'temurin'
     
-    - name: Clean gradle caches
+    - name: Install Gradle
       run: |
-        chmod +x gradlew
-        ./gradlew clean
-        rm -rf ~/.gradle/caches/
+        sudo apt-get update
+        sudo apt-get install gradle -y
     
-    - name: Build APK
-      run: ./gradlew assembleDebug --no-daemon --stacktrace
+    - name: Build APK (without wrapper)
+      run: gradle assembleDebug
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
