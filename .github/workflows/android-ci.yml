@@ -1,0 +1,54 @@
+name: Nightly Build
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Chạy 2:00 AM mỗi ngày
+  workflow_dispatch:
+
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: 17
+        distribution: 'temurin'
+    
+    - name: Cache Gradle
+      uses: actions/cache@v4
+      with:
+        path: ~/.gradle/caches
+        key: ${{ runner.os }}-gradle-nightly
+    
+    - name: Build Debug APK
+      run: |
+        chmod +x gradlew
+        ./gradlew clean :app:assembleDebug --no-daemon
+    
+    - name: Upload Nightly APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: nightly-${{ github.run_number }}
+        path: app/build/outputs/apk/debug/*.apk
+        retention-days: 3
+    
+    - name: Create Nightly Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: nightly-${{ github.run_number }}
+        name: "Nightly Build #${{ github.run_number }}"
+        body: |
+          ## 🌙 Nightly Build
+          
+          - Date: $(date)
+          - Commit: ${{ github.sha }}
+          - Auto-generated nightly build
+        files: app/build/outputs/apk/debug/*.apk
+        prerelease: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
