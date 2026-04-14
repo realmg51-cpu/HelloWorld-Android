@@ -78,7 +78,7 @@ MIT License
 
 ## 👨‍💻 作者 | Author
 
-Your Name
+RealMG (realmg51-cpu) and You!
 
 ---
 
