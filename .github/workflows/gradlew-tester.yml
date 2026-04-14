@@ -82,7 +82,7 @@ jobs:
         id: checksum
         run: |
           ACTUAL_SHA=$(sha256sum gradle/wrapper/gradle-wrapper.jar | cut -d' ' -f1)
-          EXPECTED_SHA="8d42419d08a9a88454d99593e74466c29af1c73e4ddd0502c5317a3a8c836c86"
+          EXPECTED_SHA="55243ef57851f12b070ad14f7f5bb8302daceeebc5bce5ece5fa6edb23e1145c"
           
           echo "🔍 SHA-256 thực tế: $ACTUAL_SHA"
           echo "📌 SHA-256 mong đợi: $EXPECTED_SHA"
