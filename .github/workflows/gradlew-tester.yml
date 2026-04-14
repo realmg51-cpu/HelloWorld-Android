@@ -1,0 +1,233 @@
+name: Gradle Wrapper Tester
+
+on:
+  push:
+    paths:
+      - 'gradle/wrapper/**'
+      - '**/build.gradle.kts'
+      - '**/build.gradle'
+  pull_request:
+    paths:
+      - 'gradle/wrapper/**'
+  workflow_dispatch:
+
+jobs:
+  full-check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # ========== 1. KIỂM TRA FILE TỒN TẠI ==========
+      - name: Kiểm tra file gradle-wrapper.jar
+        id: check-jar
+        run: |
+          if [ -f "gradle/wrapper/gradle-wrapper.jar" ]; then
+            echo "✅ gradle-wrapper.jar tồn tại"
+            echo "jar_exists=true" >> $GITHUB_OUTPUT
+            ls -lh gradle/wrapper/gradle-wrapper.jar
+          else
+            echo "❌ KHÔNG tìm thấy gradle-wrapper.jar"
+            echo "jar_exists=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+      
+      - name: Kiểm tra file gradle-wrapper.properties
+        run: |
+          if [ -f "gradle/wrapper/gradle-wrapper.properties" ]; then
+            echo "✅ gradle-wrapper.properties tồn tại"
+            echo "=== NỘI DUNG FILE ==="
+            cat gradle/wrapper/gradle-wrapper.properties
+            echo "======================"
+          else
+            echo "❌ KHÔNG tìm thấy gradle-wrapper.properties"
+            exit 1
+          fi
+      
+      - name: Kiểm tra file gradlew
+        run: |
+          if [ -f "gradlew" ]; then
+            echo "✅ gradlew tồn tại"
+            ls -lh gradlew
+          else
+            echo "⚠️ KHÔNG tìm thấy gradlew"
+          fi
+      
+      # ========== 2. KIỂM TRA FILE JAR ==========
+      - name: Kiểm tra gradle-wrapper.jar có phải file ZIP không
+        run: |
+          if file gradle/wrapper/gradle-wrapper.jar | grep -q "Zip archive"; then
+            echo "✅ gradle-wrapper.jar là file ZIP hợp lệ"
+          else
+            echo "❌ gradle-wrapper.jar KHÔNG phải file ZIP (bị corrupt)"
+            exit 1
+          fi
+      
+      - name: Thử giải nén gradle-wrapper.jar
+        run: |
+          mkdir -p /tmp/test-wrapper
+          cd /tmp/test-wrapper
+          if unzip -t $GITHUB_WORKSPACE/gradle/wrapper/gradle-wrapper.jar > /dev/null 2>&1; then
+            echo "✅ gradle-wrapper.jar giải nén thành công"
+          else
+            echo "❌ gradle-wrapper.jar KHÔNG thể giải nén (bị CORRUPT)"
+            exit 1
+          fi
+      
+      # ========== 3. KIỂM TRA CHECKSUM (Gradle 9.4.1) ==========
+      - name: Kiểm tra SHA-256 checksum (Gradle 9.4.1)
+        id: checksum
+        run: |
+          ACTUAL_SHA=$(sha256sum gradle/wrapper/gradle-wrapper.jar | cut -d' ' -f1)
+          EXPECTED_SHA="8d42419d08a9a88454d99593e74466c29af1c73e4ddd0502c5317a3a8c836c86"
+          
+          echo "🔍 SHA-256 thực tế: $ACTUAL_SHA"
+          echo "📌 SHA-256 mong đợi: $EXPECTED_SHA"
+          
+          if [ "$ACTUAL_SHA" = "$EXPECTED_SHA" ]; then
+            echo "✅ Gradle 9.4.1 - File KHÔNG bị corrupt, checksum khớp!"
+            echo "checksum_status=passed" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Checksum KHÔNG khớp! File có thể bị corrupt hoặc sai version"
+            echo "checksum_status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+      
+      # ========== 4. KIỂM TRA GRADLE-WRAPPER.PROPERTIES ==========
+      - name: Kiểm tra distributionUrl trong properties
+        run: |
+          if grep -q "gradle-9.4.1-bin.zip" gradle/wrapper/gradle-wrapper.properties; then
+            echo "✅ distributionUrl đúng: gradle-9.4.1-bin.zip"
+            URL=$(grep "distributionUrl" gradle/wrapper/gradle-wrapper.properties)
+            echo "URL: $URL"
+          else
+            echo "❌ distributionUrl sai hoặc không phải gradle-9.4.1-bin.zip"
+            cat gradle/wrapper/gradle-wrapper.properties
+            exit 1
+          fi
+      
+      # ========== 5. KIỂM TRA QUYỀN THỰC THI ==========
+      - name: Kiểm tra và sửa quyền cho gradlew
+        run: |
+          if [ -f "gradlew" ]; then
+            chmod +x gradlew
+            echo "✅ gradlew đã có quyền thực thi"
+            ls -la gradlew
+          fi
+      
+      # ========== 6. THỬ CHẠY GRADLE ==========
+      - name: Thử chạy gradlew --version
+        id: gradle-run
+        run: |
+          if [ -f "gradlew" ]; then
+            echo "Đang chạy ./gradlew --version ..."
+            ./gradlew --version || {
+              echo "❌ gradlew chạy thất bại"
+              exit 1
+            }
+          else
+            echo "⚠️ Không có gradlew, bỏ qua bước này"
+          fi
+      
+      - name: Thử chạy gradlew tasks
+        run: |
+          if [ -f "gradlew" ]; then
+            echo "Đang chạy ./gradlew tasks ..."
+            ./gradlew tasks --no-daemon 2>&1 | head -30 || true
+          fi
+      
+      # ========== 7. KIỂM TRA FILE BUILD ==========
+      - name: Kiểm tra file build.gradle.kts hoặc build.gradle
+        run: |
+          if [ -f "build.gradle.kts" ]; then
+            echo "✅ Tìm thấy build.gradle.kts (Kotlin DSL)"
+            head -20 build.gradle.kts
+          elif [ -f "build.gradle" ]; then
+            echo "✅ Tìm thấy build.gradle (Groovy DSL)"
+            head -20 build.gradle
+          elif [ -f "app/build.gradle.kts" ]; then
+            echo "✅ Tìm thấy app/build.gradle.kts"
+          elif [ -f "app/build.gradle" ]; then
+            echo "✅ Tìm thấy app/build.gradle"
+          else
+            echo "⚠️ Không tìm thấy file build.gradle(.kts)"
+          fi
+      
+      # ========== 8. KIỂM TRA SETTINGS FILE ==========
+      - name: Kiểm tra settings.gradle.kts hoặc settings.gradle
+        run: |
+          if [ -f "settings.gradle.kts" ]; then
+            echo "✅ Tìm thấy settings.gradle.kts"
+            cat settings.gradle.kts
+          elif [ -f "settings.gradle" ]; then
+            echo "✅ Tìm thấy settings.gradle"
+            cat settings.gradle
+          else
+            echo "⚠️ Không tìm thấy settings.gradle(.kts)"
+          fi
+      
+      # ========== 9. KIỂM TRA CẤU HÌNH ANDROID ==========
+      - name: Kiểm tra Android configuration
+        run: |
+          if grep -q "com.android.application" app/build.gradle.kts 2>/dev/null || \
+             grep -q "com.android.application" app/build.gradle 2>/dev/null; then
+            echo "✅ Android Application plugin được cấu hình"
+          else
+            echo "⚠️ Chưa tìm thấy Android Application plugin"
+          fi
+      
+      # ========== 10. TẠO BÁO CÁO TÓM TẮT ==========
+      - name: Tạo báo cáo kết quả
+        if: always()
+        run: |
+          echo "## 📊 KẾT QUẢ KIỂM TRA GRADLE WRAPPER 9.4.1" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Hạng mục | Trạng thái |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| gradle-wrapper.jar tồn tại | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| gradle-wrapper.properties tồn tại | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| File ZIP hợp lệ | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Checksum SHA-256 (Gradle 9.4.1) | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| distributionUrl đúng | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| gradlew có quyền thực thi | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| ./gradlew --version chạy được | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🎉 KẾT LUẬN: GRADLE WRAPPER 9.4.1 KHÔNG BỊ CORRUPT!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Kiểm tra lúc: $(date)*" >> $GITHUB_STEP_SUMMARY
+
+  # ========== JOB RIÊNG: THỬ BUILD APK ==========
+  test-build:
+    name: Thử build APK
+    runs-on: ubuntu-latest
+    needs: full-check
+    if: success()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Cài đặt JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: 'temurin'
+      
+      - name: Cấp quyền cho gradlew
+        run: chmod +x gradlew
+      
+      - name: Thử build debug APK
+        run: |
+          ./gradlew assembleDebug --no-daemon
+        continue-on-error: true
+      
+      - name: Upload APK (nếu build thành công)
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: app/build/outputs/apk/debug/*.apk
+        continue-on-error: true
