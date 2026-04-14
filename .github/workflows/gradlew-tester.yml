@@ -226,7 +226,7 @@ jobs:
         continue-on-error: true
       
       - name: Upload APK (nếu build thành công)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: app-debug
           path: app/build/outputs/apk/debug/*.apk
