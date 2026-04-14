@@ -19,7 +19,7 @@ jobs:
       
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       # ========== 1. KIỂM TRA FILE TỒN TẠI ==========
       - name: Kiểm tra file gradle-wrapper.jar
@@ -209,7 +209,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Cài đặt JDK 17
         uses: actions/setup-java@v5
