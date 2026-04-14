@@ -84,7 +84,7 @@ RealMG (realmg51-cpu) and You!
 
 ## 🙏 致谢 | Thanks
 
-- [BetterAndroid](https://github.com/HighCapable/BetterAndroid) (已移除，但感谢灵感 | Removed but thanks for inspiration)
+- [BetterAndroid](https://github.com/BetterAndroid/android-app-template) (已移除，但感谢灵感 | Removed but thanks for inspiration)
 - [SweetDependency](https://github.com/HighCapable/SweetDependency) (已移除 | Removed)
 
 
