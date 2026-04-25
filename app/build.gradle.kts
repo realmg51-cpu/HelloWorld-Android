@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "com.cotlin.helloandroid"
-    compileSdk = 35  // Nên lên 35 cho mới
+    compileSdk = 37  // Nên lên 35 cho mới
 
     defaultConfig {
         applicationId = "com.cotlin.helloandroid"
         minSdk = 21
-        targetSdk = 35  // Cập nhật luôn targetSdk
+        targetSdk = 37  // Cập nhật luôn targetSdk
         versionCode = 1
         versionName = "1.0"
     }
