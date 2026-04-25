@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.cotlin.helloandroid"
-        minSdk = 21
+        minSdk = 30
         targetSdk = 37  // Cập nhật luôn targetSdk
         versionCode = 1
         versionName = "1.0"
